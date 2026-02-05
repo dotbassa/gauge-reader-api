@@ -44,47 +44,46 @@ A production-ready FastAPI microservice that integrates with X1 Sensing IoT came
 
 ## Architecture
 
-The application follows a clean, modular architecture pattern:
+The application follows a clean, modular architecture with clear separation of concerns:
 
-```
-┌─────────────────┐         MQTT          ┌──────────────────┐
-│  X1 Sensing     │ ───────────────────►  │  MQTT Broker     │
-│  Camera         │    (Topic: Snapshot)  │  (Mosquitto)     │
-└─────────────────┘                       └──────────────────┘
-                                                   │
-                                                   ▼
-                                          ┌──────────────────┐
-                                          │  MQTT Service    │
-                                          │  (Subscriber)    │
-                                          └──────────────────┘
-                                                   │
-                                                   ▼
-                                          ┌──────────────────┐
-                                          │  Processing      │
-                                          │  Service*        │
-                                          └──────────────────┘
-                                                   │
-                                                   ▼
-                ┌─────────────────────────────────────────────┐
-                │          FastAPI Application                │
-                │  ┌────────────┐  ┌──────────────┐          │
-                │  │  Router    │  │  Endpoints   │          │
-                │  │  (v1 API)  │  │  (Handlers)  │          │
-                │  └────────────┘  └──────────────┘          │
-                │  ┌────────────┐  ┌──────────────┐          │
-                │  │  Schemas   │  │  Config      │          │
-                │  │  (Pydantic)│  │  Management  │          │
-                │  └────────────┘  └──────────────┘          │
-                └─────────────────────────────────────────────┘
-                                   │
-                                   ▼
-                          ┌──────────────────┐
-                          │  REST API        │
-                          │  Consumers       │
-                          └──────────────────┘
-```
+### Data Flow
 
-_\*Image processing algorithms are proprietary and protected under NDA_
+1. **Image Acquisition**
+   - X1 Sensing Camera captures gauge images at scheduled intervals
+   - Images are published to MQTT broker via `X1SensingCamera/Snapshot` topic
+   - QoS 1 ensures reliable message delivery
+
+2. **MQTT Communication Layer**
+   - Mosquitto broker acts as message queue between camera and application
+   - MQTT Service subscribes to camera topic and receives image payloads
+   - Async message handling prevents blocking operations
+
+3. **Processing Pipeline\***
+   - Received images are processed to extract gauge readings
+   - Computer vision algorithms analyze gauge position and values
+   - Results are validated and formatted for storage
+
+4. **Application Layer**
+   - **FastAPI Framework:** Handles HTTP requests and application lifecycle
+   - **Router (v1 API):** Manages endpoint routing and version control
+   - **Endpoints:** Controller logic for handling client requests
+   - **Schemas (Pydantic):** Request/response validation and serialization
+   - **Config Management:** Environment-based configuration loading
+
+5. **API Interface**
+   - RESTful endpoints expose gauge data to consumers
+   - OpenAPI documentation for interactive testing
+   - JSON responses with standardized format
+
+### Key Architectural Benefits
+
+- **Loose Coupling:** Services communicate through well-defined interfaces
+- **Scalability:** Async operations and MQTT allow horizontal scaling
+- **Maintainability:** Clear separation of concerns simplifies updates
+- **Testability:** Modular design enables isolated unit testing
+- **Reliability:** MQTT QoS and error handling ensure data integrity
+
+_\*Note: Proprietary image processing algorithms are not included in this repository due to NDA requirements._
 
 ## Requirements
 
@@ -344,4 +343,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Developed by Daniel Bassano** | [GitHub](https://github.com/dotbassa) | [LinkedIn](www.linkedin.com/in/dotbassa)
+**Developed by Daniel Bassano**
